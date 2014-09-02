@@ -19,31 +19,52 @@ describe LogSpy::Spy do
     let(:call_result) { [200, { 'Content-Type' => 'application/json' }, [ 'body' ]] }
     let(:env) { {} }
 
+    let(:request) { double(:request) }
+    let(:payload) { double(:payload, :to_json => {'key' => 'val'}.to_json) }
+
     let(:middleware) { LogSpy::Spy.new(app, sqs_url, options) }
+    let(:duration) { 20 }
+    let(:now) { Time.now }
+    let(:three_sec_later) { now + duration }
 
     before :each do
       allow(AWS::SQS).to receive_messages(:new => sqs)
       allow(app).to receive_messages(:call => call_result)
+      allow(Rack::Request).to receive_messages(:new => request)
+      allow(LogSpy::Payload).to receive_messages(:new => payload)
+      allow(Time).to receive(:now).and_return(now, three_sec_later)
     end
 
     it 'config sqs with options' do
       expect(AWS::SQS).to receive(:new).with(options)
 
       middleware.call env
+      middleware.sqs_thread.join
     end
 
-    it 'sends log object json to sqs' do
-      request = double(:request)
-      expect(Rack::Request).to receive(:new).with(env).and_return(request)
-
-      payload = double(:payload, :to_json => { 'key' => 'val' }.to_json)
-      expect(LogSpy::Payload).to receive(:new).with(request).and_return(payload)
+    it 'sends payload json json to sqs' do
+      expect(Rack::Request).to receive(:new).with(env)
 
       expect(queue).to receive(:send_message).with(payload.to_json)
       middleware.call env
+      middleware.sqs_thread.join
     end
 
+    it 'builds payload with request, status, request_time' do
+      expect(LogSpy::Payload).to receive(:new) do |req, res|
+        expect(req).to be(request)
+        expect(res.status).to eq(200)
+        expect(res.duration).to eq(duration)
+      end
 
+      middleware.call env
+      middleware.sqs_thread.join
+    end
+
+    it 'returns original result' do
+      expect(middleware.call(env)).to eq(call_result)
+      middleware.sqs_thread.join
+    end
     
   end
 end
