@@ -14,7 +14,7 @@ class LogSpy::Payload
       :status => @res.status,
       :execution_time => @res.duration,
       :request => {
-        :path => @req.path,
+        :content_type => @req.content_type,
         :request_method => @req.request_method,
         :ip => @req.ip,
         :query_string => @req.query_string,

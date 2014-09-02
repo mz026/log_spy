@@ -9,11 +9,12 @@ describe LogSpy::Payload do
   let(:status) { 200 }
   let(:duration) { 335 }
   let(:body) { double(:body, :read => 'the-raw-body') }
+  let(:content_type) { 'application/json' }
 
   let(:request) do 
     double(:request,
            :path => path,
-           :content_type => 'application/json',
+           :content_type => content_type,
            :request_method => request_method,
            :ip => ip,
            :query_string => query_string,
@@ -42,7 +43,7 @@ describe LogSpy::Payload do
         :status => status,
         :execution_time => duration,
         :request => {
-          :path => path,
+          :content_type => content_type,
           :request_method => request_method,
           :ip => ip,
           :query_string => query_string,
@@ -59,6 +60,7 @@ describe LogSpy::Payload do
 
       it 'returns no body if request content_type is multipart' do
         allow(request).to receive_messages(:content_type => 'multipart/form-data')
+        expected_hash[:request][:content_type] = 'multipart/form-data'
         expected_hash[:request][:body] = ''
         expect(payload.to_json).to eq(expected_hash.to_json) 
       end

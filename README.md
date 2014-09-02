@@ -50,7 +50,7 @@ config.middleware.use LogSpy::Spy, 'aws-sqs-url', :reigon => 'ap-southeast-1'
   "status": 200,
   "execution_time": 145.3, // in ms
   "request": {
-    "path": "/the/request/path",
+    "content_type": "application/json",
     "request_method": "post",
     "ip": "123.1.1.1",
     "query_string": "query-key=query-val&hello=world",
@@ -66,7 +66,7 @@ config.middleware.use LogSpy::Spy, 'aws-sqs-url', :reigon => 'ap-southeast-1'
 ```
 
 - `error`: `error` would not be included in the payload if no exception was raised
-- `request.body`: if the request `Content-Type` is of multipart, the body would be an empty string
+- `request.body`: if the request `Content-Type` is of `multipart`, the body would be an empty string
 
 ## Testing:
 `$ bundle install`
