@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = LogSpy::VERSION
   spec.authors       = ["Yang-Hsing Lin"]
   spec.email         = ["yanghsing.lin@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = %q{ send rack application log to Amazon SQS }
+  spec.description   = %q{ LogSpy is a rack middleware sending request log to Amazon SQS }
   spec.homepage      = ""
   spec.license       = "MIT"
 
