@@ -65,6 +65,38 @@ describe LogSpy::Spy do
       expect(middleware.call(env)).to eq(call_result)
       middleware.sqs_thread.join
     end
+
+    context "if `app.call raises`" do
+      let(:error) { Exception.new }
+
+      before :each do
+        allow(app).to receive(:call).and_raise(error)
+      end
+      
+      it 'build payload with error' do
+        expect(LogSpy::Payload).to receive(:new) do |req, res, err|
+          expect(req).to be(request)
+          expect(res.status).to eq(500)
+          expect(res.duration).to eq(duration)
+          expect(err).to eq(error)
+        end
+
+        begin
+          middleware.call(env)
+        rescue Exception => e
+        end
+
+        middleware.sqs_thread.join
+      end
+
+      it 'forward to error' do
+        expect {
+          middleware.call(env)
+        }.to raise_error(error)
+
+        middleware.sqs_thread.join
+      end
+    end
     
   end
 end

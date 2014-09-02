@@ -14,12 +14,12 @@ class LogSpy::Spy
 
   def call env
     start_time = Time.now.to_i
+    req = Rack::Request.new env
     status, header, body = @app.call(env)
     duration = Time.now.to_i - start_time
 
     @sqs_thread = Thread.new do
       sqs = AWS::SQS.new(@options)
-      req = Rack::Request.new env
       res = OpenStruct.new({
         :duration => duration,
         :status => status
@@ -30,5 +30,20 @@ class LogSpy::Spy
     end
 
     [ status, header, body ]
+
+  rescue Exception => err
+    duration = Time.now.to_i - start_time
+    @sqs_thread = Thread.new do
+      sqs = AWS::SQS.new(@options)
+      res = OpenStruct.new({
+        :duration => duration,
+        :status => 500 
+      })
+      payload = ::LogSpy::Payload.new(req, res, err)
+
+      sqs.queues[@sqs_url].send_message(payload.to_json)
+    end
+
+    raise err
   end
 end
