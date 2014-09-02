@@ -13,7 +13,7 @@ class LogSpy::Spy
   end
 
   def call env
-    @start_time = Time.now.to_i
+    @start_time = Time.now.to_f
     @req = Rack::Request.new env
     @status, @header, @body = @app.call(env)
 
@@ -30,7 +30,7 @@ class LogSpy::Spy
       status = err ? 500 : @status
       sqs = AWS::SQS.new(@options)
       res = OpenStruct.new({
-        :duration => Time.now.to_i - @start_time,
+        :duration => (Time.now.to_f - @start_time) * 1000,
         :status => status
       })
       payload = ::LogSpy::Payload.new(@req, res, err)

@@ -54,7 +54,7 @@ describe LogSpy::Spy do
       expect(LogSpy::Payload).to receive(:new) do |req, res|
         expect(req).to be(request)
         expect(res.status).to eq(200)
-        expect(res.duration).to eq(duration)
+        expect(res.duration).to eq(duration * 1000)
       end
 
       middleware.call env
@@ -77,7 +77,7 @@ describe LogSpy::Spy do
         expect(LogSpy::Payload).to receive(:new) do |req, res, err|
           expect(req).to be(request)
           expect(res.status).to eq(500)
-          expect(res.duration).to eq(duration)
+          expect(res.duration).to eq(duration * 1000)
           expect(err).to eq(error)
         end
 
