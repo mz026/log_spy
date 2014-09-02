@@ -13,37 +13,30 @@ class LogSpy::Spy
   end
 
   def call env
-    start_time = Time.now.to_i
-    req = Rack::Request.new env
-    status, header, body = @app.call(env)
-    duration = Time.now.to_i - start_time
+    @start_time = Time.now.to_i
+    @req = Rack::Request.new env
+    @status, @header, @body = @app.call(env)
 
-    @sqs_thread = Thread.new do
-      sqs = AWS::SQS.new(@options)
-      res = OpenStruct.new({
-        :duration => duration,
-        :status => status
-      })
-      payload = ::LogSpy::Payload.new(req, res)
-
-      sqs.queues[@sqs_url].send_message(payload.to_json)
-    end
-
-    [ status, header, body ]
-
+    @sqs_thread = send_sqs_async
+    [ @status, @header, @body ]
   rescue Exception => err
-    duration = Time.now.to_i - start_time
-    @sqs_thread = Thread.new do
-      sqs = AWS::SQS.new(@options)
-      res = OpenStruct.new({
-        :duration => duration,
-        :status => 500 
-      })
-      payload = ::LogSpy::Payload.new(req, res, err)
-
-      sqs.queues[@sqs_url].send_message(payload.to_json)
-    end
+    @sqs_thread = send_sqs_async(err)
 
     raise err
   end
+
+  def send_sqs_async(err = nil)
+    @sqs_thread = Thread.new do
+      status = err ? 500 : @status
+      sqs = AWS::SQS.new(@options)
+      res = OpenStruct.new({
+        :duration => Time.now.to_i - @start_time,
+        :status => status
+      })
+      payload = ::LogSpy::Payload.new(@req, res, err)
+
+      sqs.queues[@sqs_url].send_message(payload.to_json)
+    end
+  end
+  private :send_sqs_async
 end
