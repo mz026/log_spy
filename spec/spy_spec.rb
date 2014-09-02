@@ -23,7 +23,7 @@ describe LogSpy::Spy do
     let(:payload) { double(:payload, :to_json => {'key' => 'val'}.to_json) }
 
     let(:middleware) { LogSpy::Spy.new(app, sqs_url, options) }
-    let(:duration) { 20 }
+    let(:duration) { 20.12345 }
     let(:now) { Time.now }
     let(:three_sec_later) { now + duration }
 
@@ -54,7 +54,7 @@ describe LogSpy::Spy do
       expect(LogSpy::Payload).to receive(:new) do |req, res|
         expect(req).to be(request)
         expect(res.status).to eq(200)
-        expect(res.duration).to eq(duration * 1000)
+        expect(res.duration).to eq((duration * 1000).round(0))
       end
 
       middleware.call env
@@ -77,7 +77,7 @@ describe LogSpy::Spy do
         expect(LogSpy::Payload).to receive(:new) do |req, res, err|
           expect(req).to be(request)
           expect(res.status).to eq(500)
-          expect(res.duration).to eq(duration * 1000)
+          expect(res.duration).to eq(( duration * 1000 ).round(0))
           expect(err).to eq(error)
         end
 
