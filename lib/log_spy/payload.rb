@@ -1,0 +1,3 @@
+class LogSpy::Payload
+
+end
