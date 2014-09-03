@@ -51,9 +51,10 @@ describe LogSpy::Spy do
     end
 
     it 'builds payload with request, status, request_time' do
-      expect(LogSpy::Payload).to receive(:new) do |req, res|
+      expect(LogSpy::Payload).to receive(:new) do |req, res, begin_at|
         expect(req).to be(request)
         expect(res.status).to eq(200)
+        expect(begin_at).to eq(now.to_i)
         expect(res.duration).to eq((duration * 1000).round(0))
       end
 
@@ -74,10 +75,11 @@ describe LogSpy::Spy do
       end
       
       it 'build payload with error' do
-        expect(LogSpy::Payload).to receive(:new) do |req, res, err|
+        expect(LogSpy::Payload).to receive(:new) do |req, res, begin_at, err|
           expect(req).to be(request)
           expect(res.status).to eq(500)
           expect(res.duration).to eq(( duration * 1000 ).round(0))
+          expect(begin_at).to eq(now.to_i)
           expect(err).to eq(error)
         end
 

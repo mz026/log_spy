@@ -34,7 +34,7 @@ class LogSpy::Spy
         :duration => duration,
         :status => status
       })
-      payload = ::LogSpy::Payload.new(@req, res, err)
+      payload = ::LogSpy::Payload.new(@req, res, @start_time.to_i, err)
 
       sqs.queues[@sqs_url].send_message(payload.to_json)
     end
