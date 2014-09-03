@@ -28,11 +28,12 @@ describe LogSpy::Payload do
   end
 
   let(:error) { Exception.new 'the-message' }
+  let(:begin_at) { Time.now.to_i }
 
-  describe '::new(request, response[, error = nil])' do
+  describe '::new(request, response, begin_at[, error = nil])' do
     it 'takes a request, response and an optional error to init' do
-      payload = LogSpy::Payload.new request, response
-      payload_with_err = LogSpy::Payload.new(request, response, error)
+      payload = LogSpy::Payload.new(request, response, begin_at) 
+      payload_with_err = LogSpy::Payload.new(request, response, begin_at, error)
     end
   end
 
@@ -42,6 +43,7 @@ describe LogSpy::Payload do
         :path => path,
         :status => status,
         :execution_time => duration,
+        :begin_at => begin_at,
         :request => {
           :content_type => content_type,
           :request_method => request_method,
@@ -53,7 +55,7 @@ describe LogSpy::Payload do
     end
 
     context "if no error" do
-      let(:payload) { LogSpy::Payload.new request, response }
+      let(:payload) { LogSpy::Payload.new request, response, begin_at }
       it 'returns correct format' do
         expect(payload.to_json).to eq(expected_hash.to_json)
       end
@@ -67,7 +69,7 @@ describe LogSpy::Payload do
     end
 
     context "if with error" do
-      let(:payload) { LogSpy::Payload.new request, response, error }
+      let(:payload) { LogSpy::Payload.new request, response, begin_at, error }
       it 'returns error with message and backtrace' do
         expected_hash[:error] = {
           :message => error.message,

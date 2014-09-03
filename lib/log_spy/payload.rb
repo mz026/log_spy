@@ -1,9 +1,10 @@
 require 'json'
 class LogSpy::Payload
-  def initialize req, res, error = nil
+  def initialize req, res, begin_at, error = nil
     @req = req
     @res = res
     @error = error
+    @begin_at = begin_at
   end
 
   def to_json
@@ -13,6 +14,7 @@ class LogSpy::Payload
       :path => @req.path,
       :status => @res.status,
       :execution_time => @res.duration,
+      :begin_at => @begin_at,
       :request => {
         :content_type => @req.content_type,
         :request_method => @req.request_method,
