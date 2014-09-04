@@ -9,7 +9,6 @@ describe LogSpy::Payload do
   let(:status) { 200 }
   let(:duration) { 335 }
   let(:body) { double(:body) }
-  # let(:body) { double(:body, :read => 'the-raw-body') }
   let(:content_type) { 'application/json' }
 
   let(:request) do 
@@ -54,44 +53,45 @@ describe LogSpy::Payload do
       }
     end
 
+    shared_examples 'ensure_payload_formats' do
+      it 'returns correct format' do
+        expect(payload.to_json).to eq(expected_hash.to_json)
+      end
+
+      it 'returns no body if request content_type is multipart' do
+        allow(request).to receive_messages(:content_type => 'multipart/form-data')
+        expected_hash[:request][:content_type] = 'multipart/form-data'
+        expected_hash[:request][:body] = ''
+        expect(payload.to_json).to eq(expected_hash.to_json) 
+      end
+    end
+
+    shared_context "if_body_readable" do
+      before(:each) do
+        allow(body).to receive_messages(:read => 'the-raw-body') 
+        expected_hash[:request][:body] = 'the-raw-body'
+      end
+    end
+
+    shared_context 'if_body_unreadable' do
+      before(:each) do
+        allow(body).to receive(:read).and_raise(Exception, 'closed stream')
+        allow(request).to receive_messages(:env => { 'RAW_POST_BODY' => 'raw-post-body' })
+        expected_hash[:request][:body] = 'raw-post-body'
+      end
+    end
+
     context "if request ends without error" do
       let(:payload) { LogSpy::Payload.new request, response, begin_at }
 
       context "if body can be read" do
-        before(:each) { 
-          allow(body).to receive_messages(:read => 'the-raw-body') 
-          expected_hash[:request][:body] = 'the-raw-body'
-        }
-
-        it 'returns correct format' do
-          expect(payload.to_json).to eq(expected_hash.to_json)
-        end
-
-        it 'returns no body if request content_type is multipart' do
-          allow(request).to receive_messages(:content_type => 'multipart/form-data')
-          expected_hash[:request][:content_type] = 'multipart/form-data'
-          expected_hash[:request][:body] = ''
-          expect(payload.to_json).to eq(expected_hash.to_json) 
-        end
+        include_context "if_body_readable"
+        include_examples 'ensure_payload_formats'
       end
 
       context "if body can not be read" do
-        before(:each) do
-          allow(body).to receive(:read).and_raise(Exception, 'closed stream')
-          allow(request).to receive_messages(:env => { 'RAW_POST_BODY' => 'raw-post-body' })
-          expected_hash[:request][:body] = 'raw-post-body'
-        end
-
-        it 'returns correct format' do
-          expect(payload.to_json).to eq(expected_hash.to_json)
-        end
-
-        it 'returns no body if request content_type is multipart' do
-          allow(request).to receive_messages(:content_type => 'multipart/form-data')
-          expected_hash[:request][:content_type] = 'multipart/form-data'
-          expected_hash[:request][:body] = ''
-          expect(payload.to_json).to eq(expected_hash.to_json) 
-        end
+        include_context "if_body_unreadable"
+        include_examples 'ensure_payload_formats'
       end
 
     end
@@ -106,33 +106,13 @@ describe LogSpy::Payload do
       end
 
       context "if request body can be read" do
-        before(:each) { 
-          allow(body).to receive_messages(:read => 'the-raw-body') 
-          expected_hash[:request][:body] = 'the-raw-body'
-        }
-        
-        it 'returns error with message and backtrace' do
-          expect(payload.to_json).to eq(expected_hash.to_json) 
-        end
+        include_context 'if_body_readable'
+        include_examples 'ensure_payload_formats'
       end
 
       context "if request body can not be read" do
-        before(:each) do
-          allow(body).to receive(:read).and_raise(Exception, 'closed stream')
-          allow(request).to receive_messages(:env => { 'RAW_POST_BODY' => 'raw-post-body' })
-          expected_hash[:request][:body] = 'raw-post-body'
-        end
-
-        it 'returns error with message and backtrace' do
-          expect(payload.to_json).to eq(expected_hash.to_json) 
-        end
-
-        it 'returns no body if request content_type is multipart' do
-          allow(request).to receive_messages(:content_type => 'multipart/form-data')
-          expected_hash[:request][:content_type] = 'multipart/form-data'
-          expected_hash[:request][:body] = ''
-          expect(payload.to_json).to eq(expected_hash.to_json) 
-        end
+        include_context 'if_body_unreadable'
+        include_examples 'ensure_payload_formats'
       end
     end
   end
