@@ -8,8 +8,6 @@ class LogSpy::Payload
   end
 
   def to_json
-    req_body = @req.content_type =~ /multipart/ ? '' : @req.body.read
-
     hash = {
       :path => @req.path,
       :status => @res.status,
@@ -20,7 +18,7 @@ class LogSpy::Payload
         :request_method => @req.request_method,
         :ip => @req.ip,
         :query_string => @req.query_string,
-        :body => req_body
+        :body => request_body
       }
     }
 
@@ -29,5 +27,12 @@ class LogSpy::Payload
     end
 
     hash.to_json
+  end
+
+  def request_body
+    return '' if @req.content_type =~ /multipart/
+    @req.body.read
+  rescue Exception => e
+    @req.env['RAW_POST_BODY']
   end
 end
