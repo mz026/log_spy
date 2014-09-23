@@ -26,6 +26,10 @@ class LogSpy::Payload
       hash[:error] = { :message => @error.message, :backtrace => @error.backtrace }
     end
 
+    if controller_params = @req.env['action_dispatch.request.parameters']
+      hash[:controller_action] = "#{controller_params['controller']}##{controller_params['action']}"
+    end
+
     hash.to_json
   end
 

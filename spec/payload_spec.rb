@@ -18,6 +18,7 @@ describe LogSpy::Payload do
            :request_method => request_method,
            :ip => ip,
            :query_string => query_string,
+           :env => {},
            :body => body)
   end
 
@@ -79,10 +80,30 @@ describe LogSpy::Payload do
         allow(request).to receive_messages(:env => { 'RAW_POST_BODY' => 'raw-post-body' })
         expected_hash[:request][:body] = 'raw-post-body'
       end
+
+    end
+
+    shared_examples "if env['action_dispatch.request.parameters']" do
+      before :each do
+        controller_params = { 'controller' => 'users', 'action' => 'show' }
+        env = { 'action_dispatch.request.parameters' => controller_params }
+        allow(request).to receive_messages(:env => env)
+      end
+
+      it 'returns hash with `controller_action`' do
+        expected_hash[:controller_action] = "users#show"
+        expected_hash[:request][:body] = nil
+
+        expect(payload.to_json).to eq(expected_hash.to_json)
+      end
     end
 
     context "if request ends without error" do
       let(:payload) { LogSpy::Payload.new request, response, begin_at }
+
+      context "if env['action_dispatch.request.parameters']" do
+        include_examples "if env['action_dispatch.request.parameters']"
+      end
 
       context "if body can be read" do
         include_context "if_body_readable"
@@ -103,6 +124,10 @@ describe LogSpy::Payload do
           :message => error.message,
           :backtrace => error.backtrace
         }
+      end
+
+      context "if env['action_dispatch.request.parameters']" do
+        include_examples "if env['action_dispatch.request.parameters']"
       end
 
       context "if request body can be read" do
