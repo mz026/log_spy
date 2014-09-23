@@ -49,6 +49,7 @@ config.middleware.use LogSpy::Spy, 'aws-sqs-url', :reigon => 'ap-southeast-1'
   "path": "/the/request/path",
   "status": 200,
   "execution_time": 145.3, // in ms
+  "controller_action": "users#show", // if env['action_dispatch.request.parameters'] exists
   "request": {
     "content_type": "application/json",
     "request_method": "post",
