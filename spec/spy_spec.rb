@@ -50,6 +50,23 @@ describe LogSpy::Spy do
       middleware.sqs_thread.join
     end
 
+    shared_context "env['action_dispatch.request.parameters']" do
+      before(:each) do
+        env['action_dispatch.request.parameters'] = { 'controller' => 'users', 
+                                                      'action' => 'show' } 
+      end
+    end
+
+    context "if env['action_dispatch.request.parameters']" do
+      include_context "env['action_dispatch.request.parameters']"
+      it 'add `controller_action` to request before sending to sqs' do
+        expect(request).to receive(:[]=).with('controller_action', 'users#show')
+
+        middleware.call env
+        middleware.sqs_thread.join
+      end
+    end
+
     it 'builds payload with request, status, request_time' do
       expect(LogSpy::Payload).to receive(:new) do |req, res, begin_at|
         expect(req).to be(request)
@@ -97,6 +114,20 @@ describe LogSpy::Spy do
         }.to raise_error(error)
 
         middleware.sqs_thread.join
+      end
+
+      context "if env['action_dispatch.request.parameters']" do
+        include_context "env['action_dispatch.request.parameters']"
+
+        it 'add `controller_action` to request before sending to sqs' do
+          expect(request).to receive(:[]=).with('controller_action', 'users#show')
+
+          begin
+            middleware.call env
+          rescue Exception => e
+          end
+          middleware.sqs_thread.join
+        end
       end
     end
     
