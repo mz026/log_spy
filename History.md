@@ -1,4 +1,8 @@
 
+0.0.4 / 2014-09-23 
+==================
+ * add `controller_action` to payload, if `env['action_dispatch.request.parameter']` exists
+
 0.0.3 / 2014-09-04
 ==================
 
