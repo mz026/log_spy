@@ -26,11 +26,7 @@ class LogSpy::Spy
   end
 
   def req
-    r = Rack::Request.new @env
-    if controller_params = @env['action_dispatch.request.parameters']
-      r['controller_action'] = "#{controller_params['controller']}##{controller_params['action']}"
-    end
-    r
+    Rack::Request.new @env
   end
   private :req
 
