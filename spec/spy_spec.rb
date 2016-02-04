@@ -8,14 +8,15 @@ describe LogSpy::Spy do
 
   describe '#new(app, sqs_url [, options = {}])' do
     it 'takes an app, an sqs_url, and an optional options to init' do
-      middleware = LogSpy::Spy.new(app, sqs_url)
-      middleware_w_options = LogSpy::Spy.new(app, sqs_url, options)
+      LogSpy::Spy.new(app, sqs_url)
+      LogSpy::Spy.new(app, sqs_url, options)
     end
   end
 
-  describe 'call' do
-    let(:sqs) { double(:sqs, :queues => double(:[] => queue)) }
-    let(:queue) { double(:queue, :send_message => true) }
+  describe '#call' do
+    let(:sqs) { double(:sqs, :send_message => true) }
+    # let(:sqs) { double(:sqs, :queues => double(:[] => queue)) }
+    # let(:queue) { double(:queue, :send_message => true) }
     let(:call_result) { [200, { 'Content-Type' => 'application/json' }, [ 'body' ]] }
     let(:env) { {} }
 
@@ -28,29 +29,22 @@ describe LogSpy::Spy do
     let(:three_sec_later) { now + duration }
 
     before :each do
-      allow(Aws::SQS).to receive_messages(:new => sqs)
+      allow(Aws::SQS::Client).to receive_messages(:new => sqs)
       allow(app).to receive_messages(:call => call_result)
       allow(Rack::Request).to receive_messages(:new => request)
       allow(LogSpy::Payload).to receive_messages(:new => payload)
       allow(Time).to receive(:now).and_return(now, three_sec_later)
     end
 
-    it 'config sqs with options' do
-      expect(Aws::SQS).to receive(:new).with(options)
+    it 'creates a sqs client with options' do
+      expect(Aws::SQS::Client).to receive(:new).with(options)
 
       middleware.call env
       middleware.sqs_thread.join
     end
 
-    it 'sends payload json json to sqs' do
+    it 'creates payload with request, status, request_time' do
       expect(Rack::Request).to receive(:new).with(env)
-
-      expect(queue).to receive(:send_message).with(payload.to_json)
-      middleware.call env
-      middleware.sqs_thread.join
-    end
-
-    it 'builds payload with request, status, request_time' do
       expect(LogSpy::Payload).to receive(:new) do |req, res, begin_at|
         expect(req).to be(request)
         expect(res.status).to eq(200)
@@ -61,6 +55,16 @@ describe LogSpy::Spy do
       middleware.call env
       middleware.sqs_thread.join
     end
+
+    it 'sends payload json to sqs with queue url' do
+      expect(sqs).to receive(:send_message).with({
+        queue_url: sqs_url,
+        message_body: payload.to_json
+      })
+      middleware.call env
+      middleware.sqs_thread.join
+    end
+
 
     it 'returns original result' do
       expect(middleware.call(env)).to eq(call_result)
@@ -85,7 +89,7 @@ describe LogSpy::Spy do
 
         begin
           middleware.call(env)
-        rescue Exception => e
+        rescue Exception
         end
 
         middleware.sqs_thread.join

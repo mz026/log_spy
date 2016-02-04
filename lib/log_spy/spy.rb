@@ -33,7 +33,7 @@ class LogSpy::Spy
   def send_sqs_async(err = nil)
     @sqs_thread = Thread.new do
       status = err ? 500 : @status
-      sqs = Aws::SQS.new(@options)
+      sqs_client = Aws::SQS::Client.new(@options)
       duration = ( (Time.now.to_f - @start_time) * 1000 ).round(0)
       res = OpenStruct.new({
         :duration => duration,
@@ -41,7 +41,10 @@ class LogSpy::Spy
       })
       payload = ::LogSpy::Payload.new(req, res, @start_time.to_i, err)
 
-      sqs.queues[@sqs_url].send_message(payload.to_json)
+      sqs_client.send_message({
+        queue_url: @sqs_url,
+        message_body: payload.to_json
+      })
     end
   end
   private :send_sqs_async
