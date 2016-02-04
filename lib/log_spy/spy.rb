@@ -33,7 +33,7 @@ class LogSpy::Spy
   def send_sqs_async(err = nil)
     @sqs_thread = Thread.new do
       status = err ? 500 : @status
-      sqs = AWS::SQS.new(@options)
+      sqs = Aws::SQS.new(@options)
       duration = ( (Time.now.to_f - @start_time) * 1000 ).round(0)
       res = OpenStruct.new({
         :duration => duration,

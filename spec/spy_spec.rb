@@ -28,7 +28,7 @@ describe LogSpy::Spy do
     let(:three_sec_later) { now + duration }
 
     before :each do
-      allow(AWS::SQS).to receive_messages(:new => sqs)
+      allow(Aws::SQS).to receive_messages(:new => sqs)
       allow(app).to receive_messages(:call => call_result)
       allow(Rack::Request).to receive_messages(:new => request)
       allow(LogSpy::Payload).to receive_messages(:new => payload)
@@ -36,7 +36,7 @@ describe LogSpy::Spy do
     end
 
     it 'config sqs with options' do
-      expect(AWS::SQS).to receive(:new).with(options)
+      expect(Aws::SQS).to receive(:new).with(options)
 
       middleware.call env
       middleware.sqs_thread.join
@@ -73,7 +73,7 @@ describe LogSpy::Spy do
       before :each do
         allow(app).to receive(:call).and_raise(error)
       end
-      
+
       it 'build payload with error' do
         expect(LogSpy::Payload).to receive(:new) do |req, res, begin_at, err|
           expect(req).to be(request)
@@ -100,6 +100,6 @@ describe LogSpy::Spy do
       end
 
     end
-    
+
   end
 end
