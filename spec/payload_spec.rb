@@ -23,6 +23,7 @@ describe LogSpy::Payload do
            :ip => ip,
            :query_string => query_string,
            :env => {},
+           :cookies => { :key => 'val' },
            :body => body)
   end
 
@@ -53,7 +54,8 @@ describe LogSpy::Payload do
           :content_type => content_type,
           :request_method => request_method,
           :ip => ip,
-          :query_string => query_string
+          :query_string => query_string,
+          :cookies => request.cookies
         }
       }
     end

@@ -18,6 +18,7 @@ class LogSpy::Payload
         :request_method => @req.request_method,
         :ip => @req.ip,
         :query_string => @req.query_string,
+        :cookies => @req.cookies,
         :body => request_body
       }
     }
