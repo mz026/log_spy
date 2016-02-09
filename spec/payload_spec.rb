@@ -38,8 +38,8 @@ describe LogSpy::Payload do
 
   describe '::new(request, response, begin_at[, error = nil])' do
     it 'takes a request, response and an optional error to init' do
-      payload = LogSpy::Payload.new(request, response, begin_at)
-      payload_with_err = LogSpy::Payload.new(request, response, begin_at, error)
+      LogSpy::Payload.new(request, response, begin_at)
+      LogSpy::Payload.new(request, response, begin_at, error)
     end
   end
 

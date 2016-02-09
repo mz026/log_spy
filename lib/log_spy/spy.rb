@@ -15,8 +15,8 @@ class LogSpy::Spy
   def call env
     @env = env
     @start_time = Time.now.to_f
-    @status, header, body = @app.call(env)
 
+    @status, header, body = @app.call(env)
     @sqs_thread = send_sqs_async
 
     [ @status, header, body ]
