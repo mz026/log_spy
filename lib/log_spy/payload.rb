@@ -35,8 +35,9 @@ class LogSpy::Payload
 
   def request_body
     return '' if @req.content_type =~ /multipart/
+    @req.body.rewind
     @req.body.read
-  rescue Exception => e
+  rescue IOError
     @req.env['RAW_POST_BODY']
   end
 end

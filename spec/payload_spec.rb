@@ -11,7 +11,11 @@ describe LogSpy::Payload do
   let(:body) { double(:body) }
   let(:content_type) { 'application/json' }
 
-  let(:request) do 
+  before :each do
+    allow(body).to receive_messages(:rewind => body)
+  end
+
+  let(:request) do
     double(:request,
            :path => path,
            :content_type => content_type,
@@ -33,7 +37,7 @@ describe LogSpy::Payload do
 
   describe '::new(request, response, begin_at[, error = nil])' do
     it 'takes a request, response and an optional error to init' do
-      payload = LogSpy::Payload.new(request, response, begin_at) 
+      payload = LogSpy::Payload.new(request, response, begin_at)
       payload_with_err = LogSpy::Payload.new(request, response, begin_at, error)
     end
   end
@@ -63,27 +67,28 @@ describe LogSpy::Payload do
         allow(request).to receive_messages(:content_type => 'multipart/form-data')
         expected_hash[:request][:content_type] = 'multipart/form-data'
         expected_hash[:request][:body] = ''
-        expect(payload.to_json).to eq(expected_hash.to_json) 
+        expect(payload.to_json).to eq(expected_hash.to_json)
       end
     end
 
     shared_context "if_body_readable" do
       before(:each) do
-        allow(body).to receive_messages(:read => 'the-raw-body') 
+        allow(body).to receive_messages(:rewind => 0)
+        allow(body).to receive_messages(:read => 'the-raw-body')
         expected_hash[:request][:body] = 'the-raw-body'
       end
     end
 
     shared_context 'if_body_unreadable' do
       before(:each) do
-        allow(body).to receive(:read).and_raise(Exception, 'closed stream')
+        allow(body).to receive(:rewind).and_raise(IOError, 'closed stream')
         allow(request).to receive_messages(:env => { 'RAW_POST_BODY' => 'raw-post-body' })
         expected_hash[:request][:body] = 'raw-post-body'
       end
 
     end
 
-    shared_examples "if env['action_dispatch.request.parameters']" do
+    shared_examples "ensure_action_dispatch_controller_params" do
       before :each do
         controller_params = { 'controller' => 'users', 'action' => 'show' }
         env = { 'action_dispatch.request.parameters' => controller_params }
@@ -92,7 +97,6 @@ describe LogSpy::Payload do
 
       it 'returns hash with `controller_action`' do
         expected_hash[:controller_action] = "users#show"
-        expected_hash[:request][:body] = nil
 
         expect(payload.to_json).to eq(expected_hash.to_json)
       end
@@ -102,7 +106,8 @@ describe LogSpy::Payload do
       let(:payload) { LogSpy::Payload.new request, response, begin_at }
 
       context "if env['action_dispatch.request.parameters']" do
-        include_examples "if env['action_dispatch.request.parameters']"
+        include_context "if_body_readable"
+        include_examples "ensure_action_dispatch_controller_params"
       end
 
       context "if body can be read" do
@@ -127,7 +132,8 @@ describe LogSpy::Payload do
       end
 
       context "if env['action_dispatch.request.parameters']" do
-        include_examples "if env['action_dispatch.request.parameters']"
+        include_context "if_body_readable"
+        include_examples "ensure_action_dispatch_controller_params"
       end
 
       context "if request body can be read" do
