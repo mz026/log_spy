@@ -18,6 +18,7 @@ class LogSpy::Payload
         :request_method => @req.request_method,
         :ip => @req.ip,
         :query_string => @req.query_string,
+        :cookies => @req.cookies,
         :body => request_body
       }
     }
@@ -35,8 +36,9 @@ class LogSpy::Payload
 
   def request_body
     return '' if @req.content_type =~ /multipart/
+    @req.body.rewind
     @req.body.read
-  rescue Exception => e
+  rescue IOError
     @req.env['RAW_POST_BODY']
   end
 end
