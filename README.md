@@ -39,7 +39,7 @@ use LogSpy::Spy, 'aws-sqs-url'
 - Rails:
 ```ruby
 # config/application.rb
-config.middleware.use LogSpy::Spy, 'aws-sqs-url', :reigon => 'ap-southeast-1',
+config.middleware.use LogSpy::Spy, 'aws-sqs-url', :region => 'ap-southeast-1',
                                                   :access_key_id => 'the-key-id',
                                                   :secret_access_key => 'the-secret'
 ```
